@@ -23,16 +23,17 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
-  postgres:
-    image: postgres:15
+  mysql:
+    image: mysql:8.0
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: card_repo
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: card_repo
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
 
   redis:
     image: redis:7
@@ -40,4 +41,4 @@ services:
       - "6379:6379"
 
 volumes:
-  postgres_data:
+  mysql_data:

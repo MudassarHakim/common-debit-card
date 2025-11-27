@@ -1,6 +1,6 @@
 # Unified Card Repository
 
-A centralized system for managing debit card metadata, ingesting events via Kafka, and exposing APIs through a public microservice. Built with **Java 17**, **Spring Boot 3**, and **PostgreSQL**.
+A centralized system for managing debit card metadata, ingesting events via Kafka, and exposing APIs through a public microservice. Built with **Java 17**, **Spring Boot 3**, and **MySQL**.
 
 ## Architecture
 
@@ -9,9 +9,9 @@ The system consists of two main microservices:
 1.  **Card Repo Service** (`card-repo`):
     *   **Internal Service**: Not exposed to the public internet.
     *   **Kafka Consumer**: Ingests card events from the `card-events` topic.
-    *   **Database**: Stores card metadata in PostgreSQL.
+    *   **Database**: Stores card metadata in MySQL.
     *   **Sync**: Synchronizes updates to the Customer360 system (mocked).
-    *   **Tech Stack**: Spring Boot, Spring Data JPA, Spring Kafka, PostgreSQL, Redis.
+    *   **Tech Stack**: Spring Boot, Spring Data JPA, Spring Kafka, MySQL, Redis.
 
 2.  **Cards Microservice** (`cards-service`):
     *   **Public API**: Exposes REST endpoints for frontend applications.
@@ -28,7 +28,7 @@ The system consists of two main microservices:
 ## Getting Started
 
 ### 1. Start Infrastructure
-Start PostgreSQL, Kafka, Zookeeper, and Redis using Docker Compose:
+Start MySQL, Kafka, Zookeeper, and Redis using Docker Compose:
 
 ```bash
 docker-compose up -d
