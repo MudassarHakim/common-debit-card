@@ -2,7 +2,7 @@
 
 This guide explains how to verify that Kafka events are consumed, processed, and stored in the MySQL database.
 
-## 🔍 Verification Methods
+## Verification Methods
 
 ### Method 1: Check Application Logs (Recommended)
 
@@ -153,7 +153,7 @@ Check if the consumer is actively consuming messages.
 
 ---
 
-## 🧪 Complete Verification Workflow
+## Complete Verification Workflow
 
 Here's a complete step-by-step verification:
 
@@ -192,7 +192,7 @@ curl -s "http://localhost:8080/cards" \
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Issue: "Received message" log appears but "Saved card" doesn't
 
@@ -232,7 +232,7 @@ curl -s "http://localhost:8080/cards" \
 
 ---
 
-## 📊 Monitoring Commands Cheat Sheet
+## Monitoring Commands Cheat Sheet
 
 ```bash
 # Check Kafka topic
@@ -261,14 +261,14 @@ docker exec common-debit-card-kafka-1 kafka-consumer-groups \
 
 ---
 
-## ✅ Success Criteria
+## Success Criteria
 
 You can confirm the flow is working when:
 
-1.  ✅ Kafka consumer logs show "Received message"
-2.  ✅ Application logs show "Saved card"
-3.  ✅ Database query returns the card record
-4.  ✅ Internal API returns the card data
-5.  ✅ Public API returns the card data
-6.  ✅ Consumer lag is 0
-7.  ✅ No errors in application logs
+1.  Kafka consumer logs show "Received message"
+2.  Application logs show "Saved card"
+3.  Database query returns the card record
+4.  Internal API returns the card data
+5.  Public API returns the card data
+6.  Consumer lag is 0
+7.  No errors in application logs
