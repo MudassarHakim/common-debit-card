@@ -1,0 +1,189 @@
+Unified Card Repository - High Level Design (HLD v2.3.1)
+1. Introduction & Purpose
+This HLD describes the architecture and major integration patterns for the Unified Card Repository (CardRepo) aligned with PRD v2.3.1. It focuses on system boundaries, component interactions, data flows, and operational considerations. CardRepo is internal-only; frontend access is via bank microservices (CardsService).
+2. High-Level Architecture Overview
+Key components and placement: - External CMS platforms (issuers / networks) — produce card events to Kafka - Kafka (Event Bus) — reliable transport, topics for card events, DLQ for invalid messages - CardRepo Service — Kafka consumer, internal service exposing internal REST/gRPC, persistence layer - Customer360 (C360) — authoritative customer identity and attributes; CardRepo pushes updates to C360 - Cards Microservice (API Layer) — public-facing APIs for frontend (GET /cards, GET /eligible-cards) - Database (RDBMS) — primary storage for card metadata; read replicas for scalability - Cache (Redis) — distributed cache for hot reads     
+Security & Network Boundary: - CardRepo lives in a secured VPC/zone; internal APIs protected with mTLS and IAM policies. - Microservices sit in the API layer zone, behind API Gateway. - C360 APIs are reachable via internal network with service-level auth.
+3. Logical Component Diagram (text)
+Mermaid-style component diagram (paste into Mermaid-enabled tool):
+ graph LR   CMS[External CMS Systems] -->|card events| Kafka[Kafka Topic]   Kafka --> CardRepo[Card Repository Service]   CardRepo --> DB[(Card DB)]   CardRepo --> Redis[(Cache)]   CardRepo --> C360[Customer360 APIs]   APIGW[API Gateway / Microservices] -->|internal API| CardRepo   Frontend --> APIGW 
+4. Major Interaction Journeys
+4.1 Card Ingestion (CMS → Kafka → CardRepo)
+Description: Card creation / update events are produced by external CMS into Kafka. CardRepo consumes, validates, normalizes, persists, and triggers C360 sync.
+Mermaid sequence diagram:
+ sequenceDiagram   participant CMS as External CMS   participant K as Kafka   participant CR as CardRepo   participant DB as CardDB   participant C360 as Customer360   participant DLQ as DeadLetterQueue    CMS->>K: Produce CardEvent (maskedCardNumber, tokenRef, eventTimestamp, ...)   K->>CR: Deliver message   CR->>CR: Validate mandatory fields   alt invalid     CR->>DLQ: Publish to DLQ   else valid     CR->>DB: UPSERT card by tokenRef (check eventTimestamp)     CR->>CR: Normalize lifecycleStatus     CR->>Redis: Invalidate/Update cache (cards:{mobile})     CR->>C360: Push CardUpdate API     C360-->>CR: Ack   end 
+4.2 C360 Sync Failure Handling
+CardRepo must guarantee C360 sync within SLA (5s). On failure, it marks record syncPending and enqueues for reconciliation.
+Mermaid sequence diagram (failure path):
+ sequenceDiagram   participant CR as CardRepo   participant C360 as Customer360   participant Reconc as Reconciler    CR->>C360: POST /c360/cardUpdate   alt success     C360-->>CR: 200 OK   else failure     CR->>DB: set syncPending = true     CR->>Reconc: enqueue tokenRef     Reconc->>CR: retry push on schedule   end 
+4.3 Frontend Fetch (Frontend → CardsService → CardRepo)
+Description: Frontend calls CardsService which authenticates user, applies rate-limits and caching, and calls CardRepo internal API to fetch card list or eligible programs.
+Mermaid sequence diagram:
+ sequenceDiagram   participant App as Frontend App   participant MS as CardsService (API Layer)   participant CR as CardRepo   participant C360 as Customer360   participant Cache as Redis    App->>MS: GET /cards (auth token)   MS->>Cache: GET cards:{mobile}   alt cache hit     Cache-->>MS: cached cards     MS-->>App: response   else cache miss     MS->>CR: GET /internal/cards?mobile=...     CR->>DB: Query cards     DB-->>CR: rows     CR-->>MS: masked card list     MS->>C360: (optional) GET /customer/{id}     MS-->>App: enriched response   end 
+4.4 Eligibility Computation (Microservice or CardRepo)
+Description: Eligibility can be computed by CardsService or CardRepo. Flow shows microservice initiating eligibility.
+Mermaid sequence diagram:
+ sequenceDiagram   participant App as Frontend   participant MS as CardsService   participant C360 as Customer360   participant CR as CardRepo    App->>MS: GET /eligible-cards   MS->>C360: GET /customer/{id} (fetch customerType, kyc)   C360-->>MS: customerType = REGULAR   MS->>CR: GET /internal/programs   CR-->>MS: program catalogue   MS->>MS: filter programs by customerType   MS-->>App: eligible program list 
+5. Non-Functional Requirements (Expanded)
+Performance Requirements
+	•	p95 latency < 200 ms for GET APIs
+	•	p99 latency < 400 ms
+	•	Internal CardRepo APIs should target p95 < 120 ms
+	•	Kafka ingestion end-to-end < 500 ms
+	•	Redis cache hit rate target > 85%
+Reliability Requirements
+	•	99.95% service availability
+	•	DLQ handling for ingestion failures
+	•	Automatic consumer recovery
+Capacity & Throughput
+	•	Kafka ingestion up to 50,000 events per minute
+	•	Frontend read APIs up to 10,000 requests per minute
+	•	System should scale up to 5× peak loads
+C360 Sync SLA
+	•	All updates must be propagated to C360 within 5 seconds
+	•	Retry intervals: 1 sec → 2 sec → 4 sec
+	•	After failures, card marked as syncPending
+Scalability
+	•	Horizontal autoscaling for all microservices
+	•	Read replicas for DB-offloaded reads
+	•	Redis caching for high concurrency scenarios
+	•	Multi-AZ deployment across all critical systems
+Observability Requirements
+	•	Mandatory requestId propagation
+	•	Metrics: p50/p90/p95/p99, Kafka lag, DB query latency
+	•	Redis hit/miss ratio monitoring
+	•	Structured JSON logs (GROK parsable)
+Resilience Requirements
+	•	Circuit breakers for C360 and DB interactions
+	•	Retry strategies with exponential backoff
+	•	Graceful degradation when dependencies fail
+	•	Stale reads allowed only for non-sensitive cases
+Backup & Recovery Requirements
+	•	Daily full backups
+	•	PITR (Point-In-Time Recovery) enabled
+	•	Redis snapshot every 5 minutes
+
+6. Data Storage Model (Expanded)
+Primary Database
+	•	PostgreSQL (preferred) or MySQL
+	•	JSONB for raw CMS payloads
+	•	Write-optimized schema with proper indexing
+
+Card Table (Logical Schema)
+Column Name
+Description
+tokenRef
+Primary unique reference for card
+maskedCardNumber
+Masked card number (only last4 visible)
+last4
+Last four digits
+programCode
+Card program SKU
+programCategory
+Standard / Corporate / Prepaid
+network
+RuPay / Visa / Mastercard
+bin
+Issuer BIN
+lifecycleStatus
+Normalized lifecycle state
+rawStatus
+Status as received from CMS
+customerMobileNumber
+Customer mobile
+custId
+Core banking customer ID
+accountNo
+Account reference
+issuedBySystem
+Source CMS or issuer
+issuanceChannel
+Branch / Digital etc.
+eventTimestamp
+Event time from CMS
+createdAt
+Insert timestamp
+updatedAt
+Last update timestamp
+syncPending
+C360 synchronization status
+auditPayload (JSONB)
+Raw CMS event snapshot
+
+Indexing Strategy
+	•	Primary index: tokenRef
+	•	Secondary indexes:
+	•	customerMobileNumber
+	•	last4
+	•	lifecycleStatus
+	•	programCode
+	•	eventTimestamp
+
+Redis Caching
+	•	cards:{mobile} → TTL = 120 seconds
+	•	eligibility:{customerType} → TTL = 1 hour
+	•	programs:{type} → TTL = 6 hours
+	•	Invalidate customer card cache on any update
+
+Data Retention
+	•	Card data retained for card lifetime + 7 years
+	•	Closed cards archived after 2 years
+
+7. Integration APIs (Summary)
+Internal APIs (mTLS-secured)
+	•	GET /internal/cards?mobile={mobile}
+	•	GET /internal/programs
+	•	POST /internal/cards/ingest
+	•	POST /internal/cards/status
+	•	POST /internal/cards/permissions
+Public APIs (via Cards Microservice)
+	•	GET /cards
+	•	GET /eligible-cards
+API Security
+	•	Internal → mTLS + IAM role-based access
+	•	External → OAuth 2.0 / JWT tokens
+
+8. Operational Runbooks (Expanded)
+DLQ Handling
+	•	DLQ size breach triggers alert
+	•	Engineer inspects event metadata
+	•	Repairable events → corrected + re-published
+	•	Unrecoverable events → archived with reason + CMS notified
+
+Sync Reconciliation
+	•	Reconciliation job runs every 10 minutes
+	•	Processes 200–500 pending records per batch
+	•	Manual re-sync: POST /admin/cards/{tokenRef}/resync
+	•	Dashboards monitor retry counts and syncPending backlog
+
+CMS Onboarding Process
+	•	JSON schema registration
+	•	Contract testing (Pact/Postman)
+	•	Canary ingestion into shadow tables (24–48 hrs)
+	•	DLQ/mapping validation
+	•	Gradual rollout to full ingestion
+
+9. Security & Compliance (Expanded)
+Card Number Handling
+	•	Only masked card numbers stored
+	•	No PAN exists inside CardRepo
+	•	tokenRef must be non-reversible
+Logging Standards
+	•	Never log PAN, tokenRef, or sensitive identifiers
+	•	Only last4 is allowed
+	•	GROK-parseable structured JSON
+	•	requestId mandatory
+Audit Requirements
+	•	All ingestion, updates, lifecycle changes, permission changes, and sync attempts logged
+	•	Minimum audit retention: 7 years (WORM storage recommended)
+Access Control
+	•	Internal APIs: mTLS + IAM allowlist
+	•	Public APIs: OAuth2/JWT
+	•	Admin operations require RBAC + SSO approval
+Threat Model Mitigation
+	•	Replay protection via timestamp ordering
+	•	Brute-force prevention with IP/user rate limiting
+	•	Scraping detection with behavioral analytics
+
+.

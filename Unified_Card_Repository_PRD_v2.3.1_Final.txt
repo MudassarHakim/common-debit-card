@@ -1,0 +1,39 @@
+Unified Card Repository - PRD v2.3.1 (Final)
+0. Document Metadata
+ Version: v2.3.1 Purpose: Updated PRD that incorporates: - Frontend → Microservices → CardRepo routing - Kafka ingestion format as per integration PDF - Deeplink rules, logging standards, mandatory fields - C360 sync rules, idempotency, lifecycle mapping - Enterprise-grade eligibility, security, audit & threat model  Systems: - CardRepo (Internal card metadata repository) - Customer360 (Customer identity source of truth) - Cards Microservice (public API layer) - CMS Systems (upstream) - Kafka (transport) 
+1. Problem & Context
+ Card data is scattered across CMS platforms. A unified card view and eligibility logic is required. Customer identity comes only from Customer360. CardRepo stores only card metadata. Frontend applications never contact CardRepo directly: they call microservices. 
+2. Product Vision & Objectives
+ Vision: Establish a central repository for all card metadata that synchronizes with Customer360.  Objectives: - Masked card number storage - Kafka ingestion (insert/update) - Microservice API gateway layer - Real-time sync to C360 - Eligibility based on customerType - Two frontend APIs via microservices:   GET /cards, GET /eligible-cards 
+3. Scope
+ In-Scope: - Kafka-based ingestion - Card metadata normalization - C360 sync - Microservice API layer - Eligibility logic - Audit logging & threat prevention  Out-of-Scope: - Full PAN storage - UI work 
+4. System Roles
+ Frontend → Microservice → CardRepo → C360  Microservice: - Authentication & Authorization - Rate-limits, caching, presentation masking - Deeplink generation - Logging & metrics - Calls internal CardRepo APIs  CardRepo: - Internal-only APIs - Kafka consumer - C360 sync push 
+5. Card Data Model
+ CardRepo stores: - maskedCardNumber - last4 - tokenRef or cardProxyNumber - network, bin - programCode - lifecycleStatus (canonical) - rawStatus - customerMobileNumber, custId, accountNo - issuedBySystem, issuanceChannel - eventTimestamp 
+6. End-to-End Flow
+ CMS → Kafka → CardRepo (UPSERT) → C360 Sync Frontend → Cards Microservice → CardRepo → Response  Microservices enrich with customer context & deeplink logic. 
+7. Microservice Responsibilities
+ - Never store any card number locally - Enforce masking rules - Combine C360 identity + CardRepo card metadata - Implement deeplink routing rules - Log requestId, user context, latency - Cache GET responses when safe 
+8. Eligibility Logic
+ Based on C360 customerType: - REGULAR → standard programs - CORPORATE → corporate programs - UNKNOWN → empty - DORMANT → ineligible - MIN_KYC → programs requiring only min KYC 
+9. Kafka Ingestion Rules
+ Mandatory Fields: - maskedCardNumber, last4 - tokenRef / cardProxyNumber - programCode, network, bin - customerMobileNumber - lifecycleStatusRaw - eventTimestamp  Missing → DLQ. 
+10. Idempotency & Ordering
+ - tokenRef = unique identity - UPSERT for insert/update - Apply event only if eventTimestamp >= storedTimestamp - Replay-safe ingestion 
+11. Lifecycle Model
+ Created → Active → Blocked → Closed Raw CMS statuses normalized. Cards never deleted. 
+12. C360 Sync Requirements
+ Triggered after every UPSERT. Payload: - maskedCardNumber - lifecycleStatus - programCode - customer identifiers  SLA: 5 seconds Retries: 3 with exponential backoff Fallback: syncPending with background reconciliation 
+13. Deeplink Rules
+ Microservices generate deeplinks using: - cardType - lifecycle - formFactor - orderId As defined in integration document. 
+14. Logging & Observability
+ Follow GROK/Kibana log template: Fields: requestId, mobile, custType, cardRefNo, requestJson, responseJson, latency Metrics: - p95/p99 latency - C360 sync success rate - Kafka lag 
+15. Error Handling
+ - ERR_CUSTOMER_NOT_FOUND - ERR_C360_UPDATE_FAILED - ERR_CARD_NOT_FOUND - ERR_INVALID_EVENT - ERR_TIMESTAMP_OUT_OF_ORDER 
+16. Security & Threat Model
+ Mitigate: - last4 brute-force → rate-limits - replay attacks → idempotency - unauthorized access → mTLS, IAM - scraping → anomaly detection - PII leakage → redaction 
+17. Audit Requirements
+ Audit: - tokenRef - eventType - masked fields only - timestamps Retention: 7 years 
+18. Appendices
+ Includes: - Sample Kafka events - Sample C360 update schema - Deeplink formats - Eligibility examples 
