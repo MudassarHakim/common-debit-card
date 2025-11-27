@@ -2,7 +2,7 @@
 
 A centralized system for managing debit card metadata, ingesting events via Kafka, and exposing APIs through a public microservice. Built with **Java 17**, **Spring Boot 3**, and **PostgreSQL**.
 
-## 🚀 Architecture
+## Architecture
 
 The system consists of two main microservices:
 
@@ -19,13 +19,13 @@ The system consists of two main microservices:
     *   **Resilience**: Uses **Resilience4j** for circuit breaking and graceful degradation.
     *   **Tech Stack**: Spring Boot Web, Spring Cloud Circuit Breaker, Redis.
 
-## 🛠️ Prerequisites
+## Prerequisites
 
 *   **Java 17** or higher
 *   **Maven 3.8+**
 *   **Docker** & **Docker Compose**
 
-## 🏃‍♂️ Getting Started
+## Getting Started
 
 ### 1. Start Infrastructure
 Start PostgreSQL, Kafka, Zookeeper, and Redis using Docker Compose:
@@ -55,7 +55,7 @@ cd cards-service
 mvn spring-boot:run
 ```
 
-## 🧪 Verification & Testing
+## Verification & Testing
 
 ### Run Automated Tests
 Run unit and integration tests:
@@ -71,7 +71,7 @@ Use the provided script to produce a Kafka event and verify the API response:
 ./verify-flow.sh
 ```
 
-## 📡 API Documentation
+## API Documentation
 
 ### Public APIs (`cards-service`)
 
