@@ -5,7 +5,7 @@ echo "Ensure Docker Compose and Spring Boot apps are running..."
 
 # 1. Produce Kafka Event
 echo "Producing Kafka Event..."
-docker exec -i common-debit-card-kafka-1 kafka-console-producer --bootstrap-server localhost:9092 --topic card-events <<EOF
+docker exec -i common-debit-card-kafka-1 kafka-console-producer --bootstrap-server localhost:29092 --topic card-events <<EOF
 {"tokenRef":"tok_12345","maskedCardNumber":"4111xxxxxxxx1111","last4":"1111","programCode":"PRG_001","programCategory":"STANDARD","network":"VISA","bin":"411111","lifecycleStatus":"ACTIVE","rawStatus":"OPEN","customerMobileNumber":"9876543210","custId":"CUST_001","accountNo":"ACC_001","issuedBySystem":"CMS_A","issuanceChannel":"DIGITAL","eventTimestamp":"2023-10-27T10:00:00"}
 EOF
 

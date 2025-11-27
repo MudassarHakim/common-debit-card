@@ -3,7 +3,7 @@ package com.example.cardsservice.service;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
 import java.util.List;
@@ -12,15 +12,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CardIntegrationService {
 
-    private final RestClient restClient = RestClient.create();
+    private final RestTemplate restTemplate;
     private final String CARD_REPO_URL = "http://localhost:8081/internal/cards";
 
     @CircuitBreaker(name = "cardRepo", fallbackMethod = "getCardsFallback")
     public List<Object> getCards(String mobileNumber) {
-        return restClient.get()
-                .uri(CARD_REPO_URL + "?mobile=" + mobileNumber)
-                .retrieve()
-                .body(List.class);
+        return restTemplate.getForObject(CARD_REPO_URL + "?mobile=" + mobileNumber, List.class);
     }
 
     public List<Object> getCardsFallback(String mobileNumber, Throwable t) {
