@@ -2,7 +2,7 @@
 
 A centralized system for managing debit card metadata, ingesting events via Kafka, and exposing APIs through a public microservice. Built with **Java 17**, **Spring Boot 3**, and **MySQL**.
 
-## 🚀 Architecture
+## Architecture
 
 ![Architecture Diagram](docs/images/architecture_diagram.png)
 
