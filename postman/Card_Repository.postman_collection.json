@@ -1,0 +1,146 @@
+{
+    "info": {
+        "name": "Unified Card Repository",
+        "description": "Postman collection for testing the Unified Card Repository system",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Cards Service (Public APIs)",
+            "item": [
+                {
+                    "name": "Get Cards for Customer",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Mobile-Number",
+                                "value": "{{mobile_number}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{cards_service_url}}/cards",
+                            "host": [
+                                "{{cards_service_url}}"
+                            ],
+                            "path": [
+                                "cards"
+                            ]
+                        },
+                        "description": "Retrieves all cards associated with a customer's mobile number"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Eligible Card Programs",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Mobile-Number",
+                                "value": "{{mobile_number}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{cards_service_url}}/cards/eligible-cards",
+                            "host": [
+                                "{{cards_service_url}}"
+                            ],
+                            "path": [
+                                "cards",
+                                "eligible-cards"
+                            ]
+                        },
+                        "description": "Retrieves eligible card programs for a customer"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Card Repo (Internal APIs)",
+            "item": [
+                {
+                    "name": "Get Cards by Mobile (Internal)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{card_repo_url}}/internal/cards?mobile={{mobile_number}}",
+                            "host": [
+                                "{{card_repo_url}}"
+                            ],
+                            "path": [
+                                "internal",
+                                "cards"
+                            ],
+                            "query": [
+                                {
+                                    "key": "mobile",
+                                    "value": "{{mobile_number}}"
+                                }
+                            ]
+                        },
+                        "description": "Internal API to retrieve cards by mobile number"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Kafka Producer (Testing)",
+            "item": [
+                {
+                    "name": "Produce Card Event to Kafka",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"tokenRef\": \"tok_{{$randomUUID}}\",\n  \"maskedCardNumber\": \"4111xxxxxxxx1111\",\n  \"last4\": \"1111\",\n  \"programCode\": \"PRG_001\",\n  \"programCategory\": \"STANDARD\",\n  \"network\": \"VISA\",\n  \"bin\": \"411111\",\n  \"lifecycleStatus\": \"ACTIVE\",\n  \"rawStatus\": \"OPEN\",\n  \"customerMobileNumber\": \"{{mobile_number}}\",\n  \"custId\": \"CUST_{{$randomInt}}\",\n  \"accountNo\": \"ACC_{{$randomInt}}\",\n  \"issuedBySystem\": \"CMS_A\",\n  \"issuanceChannel\": \"DIGITAL\",\n  \"eventTimestamp\": \"{{$isoTimestamp}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "http://localhost:8080/kafka/produce",
+                            "protocol": "http",
+                            "host": [
+                                "localhost"
+                            ],
+                            "port": "8080",
+                            "path": [
+                                "kafka",
+                                "produce"
+                            ]
+                        },
+                        "description": "Note: This requires a Kafka producer endpoint (not included in base implementation). Use CLI or verify-flow.sh script instead."
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "cards_service_url",
+            "value": "http://localhost:8080",
+            "type": "string"
+        },
+        {
+            "key": "card_repo_url",
+            "value": "http://localhost:8081",
+            "type": "string"
+        },
+        {
+            "key": "mobile_number",
+            "value": "9876543210",
+            "type": "string"
+        }
+    ]
+}
