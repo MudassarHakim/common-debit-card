@@ -34,9 +34,9 @@ The Card Repo service logs every step of the ingestion process.
     ```
 
 **What to look for:**
-- ✅ "Received message" - Kafka consumer received the event
-- ✅ "Saved card" - Event was persisted to MySQL
-- ✅ "Successfully synced" - C360 sync completed
+- "Received message" - Kafka consumer received the event
+- "Saved card" - Event was persisted to MySQL
+- "Successfully synced" - C360 sync completed
 
 ---
 
