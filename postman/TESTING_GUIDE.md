@@ -2,7 +2,7 @@
 
 This guide provides step-by-step instructions for testing the Unified Card Repository system using Postman.
 
-## 📦 Setup
+## Setup
 
 ### 1. Import Collection and Environment
 
@@ -30,7 +30,7 @@ cd cards-service
 mvn spring-boot:run
 ```
 
-## 🧪 Step-by-Step Testing Approach
+## Step-by-Step Testing Approach
 
 ### Test Flow 1: End-to-End Card Ingestion
 
@@ -148,7 +148,7 @@ Repeat Step 2. You should now get the actual card data.
 
 ---
 
-## 🔍 Health Check
+## Health Check
 
 Check if services are healthy:
 
@@ -157,7 +157,7 @@ Check if services are healthy:
 
 ---
 
-## 📝 Testing Checklist
+## Testing Checklist
 
 - [ ] Import Postman collection and environment
 - [ ] Start all services (Docker + Spring Boot)
@@ -170,7 +170,7 @@ Check if services are healthy:
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 | Issue | Solution |
 | :--- | :--- |
@@ -181,7 +181,7 @@ Check if services are healthy:
 
 ---
 
-## 📊 Example Kafka Events
+## Example Kafka Events
 
 ### Event 1: Standard Debit Card
 ```json
