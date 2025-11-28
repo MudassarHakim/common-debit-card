@@ -82,7 +82,7 @@ Use the provided script to produce a Kafka event and verify the API response:
 | `GET` | `/cards` | Get cards for a customer | `X-Mobile-Number: <mobile>` |
 | `GET` | `/cards/eligible-cards` | Get eligible card programs | `X-Mobile-Number: <mobile>` |
 
-## 🛡️ Best Practices Implemented
+## Best Practices Implemented
 
 *   **Resilience**: Circuit Breakers (Resilience4j) prevent cascading failures.
 *   **Observability**: Spring Boot Actuator for health checks and metrics.
