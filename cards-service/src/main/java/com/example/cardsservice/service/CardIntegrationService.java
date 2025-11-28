@@ -13,11 +13,13 @@ import java.util.List;
 public class CardIntegrationService {
 
     private final RestTemplate restTemplate;
-    private final String CARD_REPO_URL = "http://localhost:8081/internal/cards";
+
+    @org.springframework.beans.factory.annotation.Value("${card-repo.url}")
+    private String cardRepoUrl;
 
     @CircuitBreaker(name = "cardRepo", fallbackMethod = "getCardsFallback")
     public List<Object> getCards(String mobileNumber) {
-        return restTemplate.getForObject(CARD_REPO_URL + "?mobile=" + mobileNumber, List.class);
+        return restTemplate.getForObject(cardRepoUrl + "?mobile=" + mobileNumber, List.class);
     }
 
     public List<Object> getCardsFallback(String mobileNumber, Throwable t) {
