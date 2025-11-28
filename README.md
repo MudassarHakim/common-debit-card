@@ -66,6 +66,11 @@ Run unit and integration tests:
 mvn test
 ```
 
+### 🧪 API Testing
+Detailed API testing instructions are available in the [Testing Guide](docs/postman/TESTING_GUIDE.md).
+
+You can import the [Postman Collection](docs/postman/Card_Repository.postman_collection.json) and [Environment](docs/postman/Card_Repository_Local.postman_environment.json) to test the APIs.
+
 ### End-to-End Verification
 Use the provided script to produce a Kafka event and verify the API response:
 
