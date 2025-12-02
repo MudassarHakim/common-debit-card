@@ -25,4 +25,26 @@ public class CardIntegrationService {
     public List<Object> getCardsFallback(String mobileNumber, Throwable t) {
         return Collections.emptyList(); // Graceful degradation
     }
+
+    @org.springframework.beans.factory.annotation.Value("${eligibility.url}")
+    private String eligibilityUrl;
+
+    @CircuitBreaker(name = "eligibility", fallbackMethod = "checkEligibilityFallback")
+    public boolean checkEligibility(String mobileNumber) {
+        // Assuming a GET request to check eligibility
+        // Adjust the path/query params as per the actual contract
+        try {
+            // Example: GET /customer-products?mobile=...
+            // We assume 200 OK means eligible, or response body contains status
+            restTemplate.getForEntity(eligibilityUrl + "?mobile=" + mobileNumber, Void.class);
+            return true;
+        } catch (Exception e) {
+            // Log error
+            return false;
+        }
+    }
+
+    public boolean checkEligibilityFallback(String mobileNumber, Throwable t) {
+        return false; // Default to not eligible on failure
+    }
 }
