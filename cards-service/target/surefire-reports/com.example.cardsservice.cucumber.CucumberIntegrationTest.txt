@@ -1,0 +1,13 @@
+-------------------------------------------------------------------------------
+Test set: com.example.cardsservice.cucumber.CucumberIntegrationTest
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.819 s <<< FAILURE! -- in com.example.cardsservice.cucumber.CucumberIntegrationTest
+Public Cards Service API.Retrieve cards for a customer -- Time elapsed: 0.788 s <<< FAILURE!
+java.lang.AssertionError: Status expected:<200> but was:<500>
+	at org.springframework.test.util.AssertionErrors.fail(AssertionErrors.java:59)
+	at org.springframework.test.util.AssertionErrors.assertEquals(AssertionErrors.java:122)
+	at org.springframework.test.web.servlet.result.StatusResultMatchers.lambda$matcher$9(StatusResultMatchers.java:637)
+	at org.springframework.test.web.servlet.MockMvc$1.andExpect(MockMvc.java:214)
+	at com.example.cardsservice.cucumber.steps.CardsServiceSteps.i_should_receive_a_successful_response(CardsServiceSteps.java:44)
+	at ✽.I should receive a successful response(classpath:features/cards_service.feature:6)
+

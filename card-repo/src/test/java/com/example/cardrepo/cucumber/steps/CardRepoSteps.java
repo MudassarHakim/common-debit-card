@@ -18,8 +18,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 
-@SpringBootTest
-@AutoConfigureMockMvc
 public class CardRepoSteps {
 
     @Autowired

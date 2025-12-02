@@ -1,1 +1,4 @@
+com/example/cardsservice/cucumber/CucumberIntegrationTest.class
+com/example/cardsservice/cucumber/steps/CardsServiceSteps.class
 com/example/cardsservice/controller/CardControllerTest.class
+com/example/cardsservice/cucumber/steps/CucumberSpringConfiguration.class

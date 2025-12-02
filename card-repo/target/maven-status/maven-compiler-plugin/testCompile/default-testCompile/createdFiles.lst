@@ -1,1 +1,4 @@
+com/example/cardrepo/cucumber/CucumberIntegrationTest.class
 com/example/cardrepo/consumer/CardEventConsumerTest.class
+com/example/cardrepo/cucumber/steps/CucumberSpringConfiguration.class
+com/example/cardrepo/cucumber/steps/CardRepoSteps.class
