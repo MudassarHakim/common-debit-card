@@ -56,7 +56,7 @@ class CardEventConsumerTest {
 
         when(cardRepository.findByTokenRef("tok_123")).thenReturn(Optional.empty());
         when(cardRepository.save(any(Card.class))).thenAnswer(i -> i.getArguments()[0]);
-        when(c360SyncService.syncToC360WithRetry(any(Card.class))).thenReturn(CompletableFuture.completedFuture(true));
+        when(c360SyncService.syncToC360(any(Card.class))).thenReturn(CompletableFuture.completedFuture(true));
 
         // Act
         cardEventConsumer.consume(message);
@@ -64,7 +64,7 @@ class CardEventConsumerTest {
         // Assert
         ArgumentCaptor<Card> cardCaptor = ArgumentCaptor.forClass(Card.class);
         verify(cardRepository).save(cardCaptor.capture());
-        verify(c360SyncService).syncToC360WithRetry(any(Card.class));
+        verify(c360SyncService).syncToC360(any(Card.class));
 
         Card savedCard = cardCaptor.getValue();
         assertEquals("tok_123", savedCard.getTokenRef());
@@ -88,7 +88,7 @@ class CardEventConsumerTest {
 
         when(cardRepository.findByTokenRef("tok_123")).thenReturn(Optional.of(existingCard));
         when(cardRepository.save(any(Card.class))).thenAnswer(i -> i.getArguments()[0]);
-        when(c360SyncService.syncToC360WithRetry(any(Card.class))).thenReturn(CompletableFuture.completedFuture(true));
+        when(c360SyncService.syncToC360(any(Card.class))).thenReturn(CompletableFuture.completedFuture(true));
 
         // Act
         cardEventConsumer.consume(message);
@@ -118,7 +118,7 @@ class CardEventConsumerTest {
 
         // Assert
         verify(cardRepository, never()).save(any(Card.class));
-        verify(c360SyncService, never()).syncToC360WithRetry(any(Card.class));
+        verify(c360SyncService, never()).syncToC360(any(Card.class));
     }
 
     @Test
@@ -133,7 +133,7 @@ class CardEventConsumerTest {
         // Assert
         verify(cardRepository, never()).findByTokenRef(anyString());
         verify(cardRepository, never()).save(any(Card.class));
-        verify(c360SyncService, never()).syncToC360WithRetry(any(Card.class));
+        verify(c360SyncService, never()).syncToC360(any(Card.class));
     }
 
     @Test
@@ -146,7 +146,7 @@ class CardEventConsumerTest {
 
         // Assert
         verify(cardRepository, never()).save(any(Card.class));
-        verify(c360SyncService, never()).syncToC360WithRetry(any(Card.class));
+        verify(c360SyncService, never()).syncToC360(any(Card.class));
     }
 
     @Test
@@ -156,13 +156,13 @@ class CardEventConsumerTest {
 
         when(cardRepository.findByTokenRef("tok_123")).thenReturn(Optional.empty());
         when(cardRepository.save(any(Card.class))).thenAnswer(i -> i.getArguments()[0]);
-        when(c360SyncService.syncToC360WithRetry(any(Card.class))).thenReturn(CompletableFuture.completedFuture(true));
+        when(c360SyncService.syncToC360(any(Card.class))).thenReturn(CompletableFuture.completedFuture(true));
 
         // Act
         cardEventConsumer.consume(message);
 
         // Assert
-        verify(c360SyncService, times(1)).syncToC360WithRetry(any(Card.class));
+        verify(c360SyncService, times(1)).syncToC360(any(Card.class));
     }
 
     @Test
@@ -180,7 +180,7 @@ class CardEventConsumerTest {
 
         when(cardRepository.findByTokenRef("tok_123")).thenReturn(Optional.empty());
         when(cardRepository.save(any(Card.class))).thenAnswer(i -> i.getArguments()[0]);
-        when(c360SyncService.syncToC360WithRetry(any(Card.class))).thenReturn(CompletableFuture.completedFuture(true));
+        when(c360SyncService.syncToC360(any(Card.class))).thenReturn(CompletableFuture.completedFuture(true));
 
         // Act
         cardEventConsumer.consume(message);

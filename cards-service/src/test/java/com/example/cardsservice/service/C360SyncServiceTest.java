@@ -1,20 +1,25 @@
 package com.example.cardsservice.service;
 
+import com.example.cardsservice.dto.CardEventDto;
 import com.example.cardsservice.entity.Card;
 import com.example.cardsservice.repository.CardRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.Optional;
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -25,23 +30,40 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class C360SyncServiceTest {
 
-    @Mock
-    private RestTemplate restTemplate;
+    private MockWebServer mockWebServer;
 
     @Mock
     private CardRepository cardRepository;
 
-    @InjectMocks
-    private C360SyncService c360SyncService;
+    @Mock
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
+    @Mock
+    private ObjectMapper objectMapper;
+
+    private C360SyncService c360SyncService;
     private Card testCard;
 
     @BeforeEach
-    void setUp() {
-        // Set configuration values using reflection
-        ReflectionTestUtils.setField(c360SyncService, "profile360Url", "http://test-c360.com/api");
+    void setUp() throws IOException {
+        mockWebServer = new MockWebServer();
+        mockWebServer.start();
+
+        WebClient webClient = WebClient.builder()
+                .baseUrl(mockWebServer.url("/").toString())
+                .build();
+
+        // Create mock Tracer and MeterRegistry
+        io.micrometer.tracing.Tracer tracer = mock(io.micrometer.tracing.Tracer.class);
+        io.micrometer.core.instrument.MeterRegistry meterRegistry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
+
+        c360SyncService = new C360SyncService(webClient, cardRepository, kafkaTemplate, objectMapper, tracer,
+                meterRegistry);
+
+        ReflectionTestUtils.setField(c360SyncService, "profile360Url", mockWebServer.url("/").toString());
+        ReflectionTestUtils.setField(c360SyncService, "retryTopic", "card-events-retry");
         ReflectionTestUtils.setField(c360SyncService, "maxRetries", 3);
-        ReflectionTestUtils.setField(c360SyncService, "initialDelayMs", 100L); // Reduced for testing
+        ReflectionTestUtils.setField(c360SyncService, "initialDelayMs", 10L); // Short delay for tests
 
         testCard = new Card();
         testCard.setId(1L);
@@ -49,138 +71,71 @@ class C360SyncServiceTest {
         testCard.setMaskedCardNumber("4111xxxx1111");
         testCard.setLast4("1111");
         testCard.setLifecycleStatus("ACTIVE");
-        testCard.setSyncPending(false);
-        testCard.setSyncRetryCount(0);
+        testCard.setEventTimestamp(LocalDateTime.now());
+    }
+
+    @AfterEach
+    void tearDown() throws IOException {
+        mockWebServer.shutdown();
     }
 
     @Test
-    void syncToC360WithRetry_Success_ShouldReturnTrue() throws ExecutionException, InterruptedException {
+    void syncToC360_Success_ShouldReturnTrue() throws ExecutionException, InterruptedException {
         // Arrange
-        when(restTemplate.postForEntity(anyString(), any(), eq(Void.class)))
-                .thenReturn(ResponseEntity.ok().build());
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200));
         when(cardRepository.save(any(Card.class))).thenReturn(testCard);
 
         // Act
-        CompletableFuture<Boolean> result = c360SyncService.syncToC360WithRetry(testCard);
+        CompletableFuture<Boolean> result = c360SyncService.syncToC360(testCard);
 
         // Assert
         assertTrue(result.get());
-        verify(restTemplate, times(1)).postForEntity(anyString(), any(), eq(Void.class));
+        verify(kafkaTemplate, never()).send(anyString(), anyString(), anyString());
 
         ArgumentCaptor<Card> cardCaptor = ArgumentCaptor.forClass(Card.class);
-        verify(cardRepository, atLeastOnce()).save(cardCaptor.capture());
-
-        Card savedCard = cardCaptor.getValue();
-        assertFalse(savedCard.isSyncPending());
-        assertEquals(0, savedCard.getSyncRetryCount());
-        assertNotNull(savedCard.getLastSyncAttempt());
+        verify(cardRepository, times(1)).save(cardCaptor.capture());
+        assertNotNull(cardCaptor.getValue().getLastSyncAttempt());
     }
 
     @Test
-    void syncToC360WithRetry_FailureWithRetries_ShouldEventuallySucceed()
-            throws ExecutionException, InterruptedException {
+    void syncToC360_RetryThenSuccess_ShouldReturnTrue() throws ExecutionException, InterruptedException {
         // Arrange - Fail twice, then succeed
-        when(restTemplate.postForEntity(anyString(), any(), eq(Void.class)))
-                .thenThrow(new RestClientException("Connection timeout"))
-                .thenThrow(new RestClientException("Connection timeout"))
-                .thenReturn(ResponseEntity.ok().build());
+        mockWebServer.enqueue(new MockResponse().setResponseCode(500));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(500));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200));
 
         when(cardRepository.save(any(Card.class))).thenReturn(testCard);
-        when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
 
         // Act
-        CompletableFuture<Boolean> result = c360SyncService.syncToC360WithRetry(testCard);
+        CompletableFuture<Boolean> result = c360SyncService.syncToC360(testCard);
 
         // Assert
         assertTrue(result.get());
-        verify(restTemplate, times(3)).postForEntity(anyString(), any(), eq(Void.class));
+        assertEquals(3, mockWebServer.getRequestCount());
+        verify(kafkaTemplate, never()).send(anyString(), anyString(), anyString());
+        verify(cardRepository, times(1)).save(any(Card.class));
     }
 
     @Test
-    void syncToC360WithRetry_AllRetriesFail_ShouldReturnFalse() throws ExecutionException, InterruptedException {
+    void syncToC360_AllRetriesFail_ShouldPushToRetryQueue()
+            throws ExecutionException, InterruptedException, JsonProcessingException {
         // Arrange - All attempts fail
-        when(restTemplate.postForEntity(anyString(), any(), eq(Void.class)))
-                .thenThrow(new RestClientException("Service unavailable"));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(500));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(500));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(500));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(500));
 
-        when(cardRepository.save(any(Card.class))).thenReturn(testCard);
-        when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
+        when(objectMapper.writeValueAsString(any(CardEventDto.class))).thenReturn("{\"tokenRef\":\"tok_test_123\"}");
 
         // Act
-        CompletableFuture<Boolean> result = c360SyncService.syncToC360WithRetry(testCard);
+        CompletableFuture<Boolean> result = c360SyncService.syncToC360(testCard);
 
         // Assert
         assertFalse(result.get());
-        verify(restTemplate, times(3)).postForEntity(anyString(), any(), eq(Void.class));
+        // Should be called 4 times: 1 initial + 3 retries
+        assertEquals(4, mockWebServer.getRequestCount());
 
-        ArgumentCaptor<Card> cardCaptor = ArgumentCaptor.forClass(Card.class);
-        verify(cardRepository, atLeastOnce()).save(cardCaptor.capture());
-
-        Card savedCard = cardCaptor.getValue();
-        assertTrue(savedCard.isSyncPending());
-        assertEquals(3, savedCard.getSyncRetryCount());
-    }
-
-    @Test
-    void manualSyncToC360_Success_ShouldResetRetryCount() {
-        // Arrange
-        testCard.setSyncPending(true);
-        testCard.setSyncRetryCount(3);
-
-        when(restTemplate.postForEntity(anyString(), any(), eq(Void.class)))
-                .thenReturn(ResponseEntity.ok().build());
-        when(cardRepository.save(any(Card.class))).thenReturn(testCard);
-
-        // Act
-        boolean result = c360SyncService.manualSyncToC360(testCard);
-
-        // Assert
-        assertTrue(result);
-
-        ArgumentCaptor<Card> cardCaptor = ArgumentCaptor.forClass(Card.class);
-        verify(cardRepository, times(1)).save(cardCaptor.capture());
-
-        Card savedCard = cardCaptor.getValue();
-        assertFalse(savedCard.isSyncPending());
-        assertEquals(0, savedCard.getSyncRetryCount());
-        assertNotNull(savedCard.getLastSyncAttempt());
-    }
-
-    @Test
-    void manualSyncToC360_Failure_ShouldSetRetryCountToOne() {
-        // Arrange
-        testCard.setSyncPending(true);
-        testCard.setSyncRetryCount(3);
-
-        when(restTemplate.postForEntity(anyString(), any(), eq(Void.class)))
-                .thenThrow(new RestClientException("Service unavailable"));
-        when(cardRepository.save(any(Card.class))).thenReturn(testCard);
-
-        // Act
-        boolean result = c360SyncService.manualSyncToC360(testCard);
-
-        // Assert
-        assertFalse(result);
-
-        ArgumentCaptor<Card> cardCaptor = ArgumentCaptor.forClass(Card.class);
-        verify(cardRepository, times(1)).save(cardCaptor.capture());
-
-        Card savedCard = cardCaptor.getValue();
-        assertTrue(savedCard.isSyncPending());
-        assertEquals(1, savedCard.getSyncRetryCount());
-    }
-
-    @Test
-    void syncToC360WithRetry_ShouldUpdateLastSyncAttempt() throws ExecutionException, InterruptedException {
-        // Arrange
-        when(restTemplate.postForEntity(anyString(), any(), eq(Void.class)))
-                .thenReturn(ResponseEntity.ok().build());
-        when(cardRepository.save(any(Card.class))).thenReturn(testCard);
-
-        // Act
-        CompletableFuture<Boolean> result = c360SyncService.syncToC360WithRetry(testCard);
-
-        // Assert
-        assertTrue(result.get());
-        assertNotNull(testCard.getLastSyncAttempt());
+        verify(kafkaTemplate, times(1)).send(eq("card-events-retry"), eq("tok_test_123"), anyString());
+        verify(cardRepository, never()).save(any(Card.class));
     }
 }

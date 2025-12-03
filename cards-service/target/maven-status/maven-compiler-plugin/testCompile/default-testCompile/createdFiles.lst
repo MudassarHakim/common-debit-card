@@ -1,6 +1,8 @@
 com/example/cardsservice/cucumber/CucumberIntegrationTest.class
 com/example/cardsservice/cucumber/steps/CardsServiceSteps.class
-com/example/cardsservice/integration/C360SyncIntegrationTest.class
-com/example/cardsservice/scheduler/C360SyncRetrySchedulerTest.class
-com/example/cardsservice/controller/CardControllerTest.class
+com/example/cardsservice/controller/C360SyncControllerTest.class
+com/example/cardsservice/service/C360SyncServiceTest.class
+com/example/cardsservice/consumer/CardEventConsumerTest.class
 com/example/cardsservice/cucumber/steps/CucumberSpringConfiguration.class
+com/example/cardsservice/controller/CardControllerTest.class
+com/example/cardsservice/cucumber/steps/CardRepoSteps.class

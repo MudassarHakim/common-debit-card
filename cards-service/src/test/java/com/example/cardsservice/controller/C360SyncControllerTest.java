@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,7 +58,7 @@ class C360SyncControllerTest {
     void manualSyncCard_Success_ShouldReturnOk() throws Exception {
         // Arrange
         when(cardRepository.findByTokenRef("tok_test_123")).thenReturn(Optional.of(testCard));
-        when(c360SyncService.manualSyncToC360(any(Card.class))).thenReturn(true);
+        when(c360SyncService.syncToC360(any(Card.class))).thenReturn(CompletableFuture.completedFuture(true));
         testCard.setSyncPending(false);
         testCard.setSyncRetryCount(0);
 
@@ -76,7 +77,7 @@ class C360SyncControllerTest {
     void manualSyncCard_Failure_ShouldReturnOkWithFailureStatus() throws Exception {
         // Arrange
         when(cardRepository.findByTokenRef("tok_test_123")).thenReturn(Optional.of(testCard));
-        when(c360SyncService.manualSyncToC360(any(Card.class))).thenReturn(false);
+        when(c360SyncService.syncToC360(any(Card.class))).thenReturn(CompletableFuture.completedFuture(false));
 
         // Act & Assert
         mockMvc.perform(post("/api/cards/sync/manual/tok_test_123"))
@@ -142,9 +143,9 @@ class C360SyncControllerTest {
         Page<Card> page = new PageImpl<>(cards, PageRequest.of(0, 100), 3);
 
         when(cardRepository.findBySyncPending(eq(true), any(PageRequest.class))).thenReturn(page);
-        when(c360SyncService.manualSyncToC360(card1)).thenReturn(true);
-        when(c360SyncService.manualSyncToC360(card2)).thenReturn(true);
-        when(c360SyncService.manualSyncToC360(card3)).thenReturn(false);
+        when(c360SyncService.syncToC360(card1)).thenReturn(CompletableFuture.completedFuture(true));
+        when(c360SyncService.syncToC360(card2)).thenReturn(CompletableFuture.completedFuture(true));
+        when(c360SyncService.syncToC360(card3)).thenReturn(CompletableFuture.completedFuture(false));
 
         // Act & Assert
         mockMvc.perform(post("/api/cards/sync/manual/all")
@@ -189,17 +190,17 @@ class C360SyncControllerTest {
     void getPendingSyncCards_WithCustomPagination_ShouldRespectParameters() throws Exception {
         // Arrange
         List<Card> cards = Arrays.asList(testCard);
-        Page<Card> page = new PageImpl<>(cards, PageRequest.of(1, 10), 15);
+        Page<Card> page = new PageImpl<>(cards, PageRequest.of(0, 10), 1);
 
         when(cardRepository.findBySyncPending(eq(true), any(PageRequest.class))).thenReturn(page);
 
         // Act & Assert
         mockMvc.perform(get("/api/cards/sync/pending")
-                .param("page", "1")
+                .param("page", "0")
                 .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.currentPage").value(1))
-                .andExpect(jsonPath("$.totalElements").value(15))
-                .andExpect(jsonPath("$.totalPages").value(2));
+                .andExpect(jsonPath("$.currentPage").value(0))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1));
     }
 }

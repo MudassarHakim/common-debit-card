@@ -73,7 +73,7 @@ public class CardEventConsumer {
             log.info("Saved card: {}", savedCard.getTokenRef());
 
             // Sync to C360 with automatic retry mechanism
-            c360SyncService.syncToC360WithRetry(savedCard);
+            c360SyncService.syncToC360(savedCard);
 
         } catch (Exception e) {
             log.error("Error processing message: {}", message, e);

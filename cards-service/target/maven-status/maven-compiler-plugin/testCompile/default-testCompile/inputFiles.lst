@@ -1,10 +1,8 @@
 /Users/Mudassar.Hakim/common-debit-card/cards-service/src/test/java/com/example/cardsservice/controller/CardControllerTest.java
 /Users/Mudassar.Hakim/common-debit-card/cards-service/src/test/java/com/example/cardsservice/controller/C360SyncControllerTest.java
 /Users/Mudassar.Hakim/common-debit-card/cards-service/src/test/java/com/example/cardsservice/cucumber/CucumberIntegrationTest.java
-/Users/Mudassar.Hakim/common-debit-card/cards-service/src/test/java/com/example/cardsservice/integration/C360SyncIntegrationTest.java
 /Users/Mudassar.Hakim/common-debit-card/cards-service/src/test/java/com/example/cardsservice/cucumber/steps/CucumberSpringConfiguration.java
 /Users/Mudassar.Hakim/common-debit-card/cards-service/src/test/java/com/example/cardsservice/cucumber/steps/CardsServiceSteps.java
 /Users/Mudassar.Hakim/common-debit-card/cards-service/src/test/java/com/example/cardsservice/cucumber/steps/CardRepoSteps.java
 /Users/Mudassar.Hakim/common-debit-card/cards-service/src/test/java/com/example/cardsservice/service/C360SyncServiceTest.java
-/Users/Mudassar.Hakim/common-debit-card/cards-service/src/test/java/com/example/cardsservice/scheduler/C360SyncRetrySchedulerTest.java
 /Users/Mudassar.Hakim/common-debit-card/cards-service/src/test/java/com/example/cardsservice/consumer/CardEventConsumerTest.java

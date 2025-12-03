@@ -89,6 +89,33 @@
         <artifactId>h2</artifactId>
         <scope>test</scope>
     </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-webflux</artifactId>
+    </dependency>
+    <!-- Micrometer for metrics -->
+    <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-core</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
+    <!-- Distributed Tracing -->
+    <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-tracing-bridge-brave</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>io.zipkin.reporter2</groupId>
+        <artifactId>zipkin-reporter-brave</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>mockwebserver</artifactId>
+        <scope>test</scope>
+    </dependency>
     </dependencies>
     <build>
         <plugins>

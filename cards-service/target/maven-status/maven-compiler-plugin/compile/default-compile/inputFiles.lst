@@ -1,9 +1,10 @@
 /Users/Mudassar.Hakim/common-debit-card/cards-service/src/main/java/com/example/cardsservice/consumer/CardEventConsumer.java
 /Users/Mudassar.Hakim/common-debit-card/cards-service/src/main/java/com/example/cardsservice/service/CardIntegrationService.java
+/Users/Mudassar.Hakim/common-debit-card/cards-service/src/main/java/com/example/cardsservice/consumer/CardRetryConsumer.java
+/Users/Mudassar.Hakim/common-debit-card/cards-service/src/main/java/com/example/cardsservice/config/WebClientConfig.java
 /Users/Mudassar.Hakim/common-debit-card/cards-service/src/main/java/com/example/cardsservice/dto/CardResponseDto.java
 /Users/Mudassar.Hakim/common-debit-card/cards-service/src/main/java/com/example/cardsservice/exception/GlobalExceptionHandler.java
 /Users/Mudassar.Hakim/common-debit-card/cards-service/src/main/java/com/example/cardsservice/repository/CardRepository.java
-/Users/Mudassar.Hakim/common-debit-card/cards-service/src/main/java/com/example/cardsservice/scheduler/C360SyncRetryScheduler.java
 /Users/Mudassar.Hakim/common-debit-card/cards-service/src/main/java/com/example/cardsservice/entity/Card.java
 /Users/Mudassar.Hakim/common-debit-card/cards-service/src/main/java/com/example/cardsservice/controller/C360SyncController.java
 /Users/Mudassar.Hakim/common-debit-card/cards-service/src/main/java/com/example/cardsservice/dto/CardEventDto.java

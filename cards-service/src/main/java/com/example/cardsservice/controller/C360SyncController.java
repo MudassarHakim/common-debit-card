@@ -33,7 +33,7 @@ public class C360SyncController {
         Card card = cardRepository.findByTokenRef(tokenRef)
                 .orElseThrow(() -> new RuntimeException("Card not found: " + tokenRef));
 
-        boolean success = c360SyncService.manualSyncToC360(card);
+        boolean success = c360SyncService.syncToC360(card).join();
 
         Map<String, Object> response = new HashMap<>();
         response.put("tokenRef", tokenRef);
@@ -80,7 +80,7 @@ public class C360SyncController {
         int failureCount = 0;
 
         for (Card card : cards) {
-            boolean success = c360SyncService.manualSyncToC360(card);
+            boolean success = c360SyncService.syncToC360(card).join();
             if (success) {
                 successCount++;
             } else {
