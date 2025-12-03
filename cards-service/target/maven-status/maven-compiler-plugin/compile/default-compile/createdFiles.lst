@@ -1,4 +1,4 @@
+com/example/cardsservice/exception/GlobalExceptionHandler.class
 com/example/cardsservice/service/CardIntegrationService.class
 com/example/cardsservice/CardsServiceApplication.class
 com/example/cardsservice/controller/CardController.class
-com/example/cardsservice/exception/GlobalExceptionHandler.class

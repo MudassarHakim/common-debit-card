@@ -49,8 +49,8 @@ public class CardRepoSteps {
 
     @When("I request cards for mobile number {string}")
     public void i_request_cards_for_mobile_number(String mobileNumber) throws Exception {
-        resultActions = mockMvc.perform(get("/internal/cards")
-                .param("mobile", mobileNumber));
+        resultActions = mockMvc.perform(get("/cards")
+                .header("X-Mobile-Number", mobileNumber));
     }
 
     @Then("I should receive a list containing at least one card")

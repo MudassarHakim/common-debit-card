@@ -28,13 +28,28 @@ public class CardEventConsumer {
         log.info("Received message: {}", message);
         try {
             CardEventDto event = objectMapper.readValue(message, CardEventDto.class);
-            
+
             if (event.getTokenRef() == null) {
                 log.error("Missing tokenRef in event: {}", message);
                 return;
             }
 
             Optional<Card> existingCardOpt = cardRepository.findByTokenRef(event.getTokenRef());
+
+            // Parse event timestamp
+            LocalDateTime eventTimestamp = null;
+            if (event.getEventTimestamp() != null) {
+                eventTimestamp = LocalDateTime.parse(event.getEventTimestamp(), DateTimeFormatter.ISO_DATE_TIME);
+            }
+
+            // Check for stale events before processing
+            if (existingCardOpt.isPresent() && eventTimestamp != null &&
+                    existingCardOpt.get().getEventTimestamp() != null &&
+                    eventTimestamp.isBefore(existingCardOpt.get().getEventTimestamp())) {
+                log.warn("Ignoring stale event for tokenRef: {}", event.getTokenRef());
+                return;
+            }
+
             Card card = existingCardOpt.orElse(new Card());
 
             // Map fields from DTO
@@ -52,34 +67,18 @@ public class CardEventConsumer {
             card.setAccountNo(event.getAccountNo());
             card.setIssuedBySystem(event.getIssuedBySystem());
             card.setIssuanceChannel(event.getIssuanceChannel());
-            
-            if (event.getEventTimestamp() != null) {
-                card.setEventTimestamp(LocalDateTime.parse(event.getEventTimestamp(), DateTimeFormatter.ISO_DATE_TIME));
-            }
-
-            // Check timestamp for idempotency
-            if (existingCardOpt.isPresent() && card.getEventTimestamp() != null && 
-                existingCardOpt.get().getEventTimestamp() != null &&
-                card.getEventTimestamp().isBefore(existingCardOpt.get().getEventTimestamp())) {
-                log.warn("Ignoring stale event for tokenRef: {}", event.getTokenRef());
-                return;
-            }
+            card.setEventTimestamp(eventTimestamp);
 
             Card savedCard = cardRepository.save(card);
             log.info("Saved card: {}", savedCard.getTokenRef());
 
-            // Sync to C360
-            c360SyncService.syncToC360(savedCard).thenAccept(success -> {
-                if (!success) {
-                    savedCard.setSyncPending(true);
-                    cardRepository.save(savedCard);
-                }
-            });
+            // Sync to C360 with automatic retry mechanism
+            c360SyncService.syncToC360WithRetry(savedCard);
 
         } catch (Exception e) {
             log.error("Error processing message: {}", message, e);
             // In a real scenario, we might throw here to let Kafka retry or DLQ handle it
-            // throw new RuntimeException(e); 
+            // throw new RuntimeException(e);
         }
     }
 }

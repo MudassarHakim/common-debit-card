@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <!-- Include default Spring Boot logging configuration -->
+  <include resource="org/springframework/boot/logging/logback/base.xml" />
+
+  <!-- Logstash TCP appender -->
+  <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    <!-- Destination of Logstash (Elasticsearch pipeline) -->
+    <destination>${logstash.host:localhost}:${logstash.port:5000}</destination>
+    <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+      <providers>
+        <timestamp />
+        <pattern>
+          <pattern>{"appName":"${spring.application.name}","environment":"${spring.profiles.active:-default}"}</pattern>
+        </pattern>
+        <logLevel />
+        <threadName />
+        <loggerName />
+        <message />
+        <stackTrace />
+      </providers>
+    </encoder>
+  </appender>
+
+  <!-- Root logger configuration -->
+  <root level="INFO">
+    <appender-ref ref="CONSOLE" />
+    <appender-ref ref="LOGSTASH" />
+  </root>
+</configuration>

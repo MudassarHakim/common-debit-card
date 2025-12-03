@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -14,16 +13,23 @@ public class CardIntegrationService {
 
     private final RestTemplate restTemplate;
 
-    @org.springframework.beans.factory.annotation.Value("${card-repo.url}")
-    private String cardRepoUrl;
+    private final com.example.cardsservice.repository.CardRepository cardRepository;
 
-    @CircuitBreaker(name = "cardRepo", fallbackMethod = "getCardsFallback")
-    public List<Object> getCards(String mobileNumber) {
-        return restTemplate.getForObject(cardRepoUrl + "?mobile=" + mobileNumber, List.class);
+    public List<com.example.cardsservice.dto.CardResponseDto> getCards(String mobileNumber) {
+        return cardRepository.findByCustomerMobileNumber(mobileNumber).stream()
+                .map(this::mapToDto)
+                .collect(java.util.stream.Collectors.toList());
     }
 
-    public List<Object> getCardsFallback(String mobileNumber, Throwable t) {
-        return Collections.emptyList(); // Graceful degradation
+    private com.example.cardsservice.dto.CardResponseDto mapToDto(com.example.cardsservice.entity.Card card) {
+        com.example.cardsservice.dto.CardResponseDto dto = new com.example.cardsservice.dto.CardResponseDto();
+        dto.setTokenRef(card.getTokenRef());
+        dto.setMaskedCardNumber(card.getMaskedCardNumber());
+        dto.setLast4(card.getLast4());
+        dto.setProgramCode(card.getProgramCode());
+        dto.setLifecycleStatus(card.getLifecycleStatus());
+        dto.setEventTimestamp(card.getEventTimestamp());
+        return dto;
     }
 
     @org.springframework.beans.factory.annotation.Value("${eligibility.url}")

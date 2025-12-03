@@ -17,10 +17,11 @@ public class CardController {
     private final CardIntegrationService cardIntegrationService;
 
     @GetMapping
-    public List<Object> getCards(@RequestHeader("X-Mobile-Number") String mobileNumber) {
+    public java.util.List<com.example.cardsservice.dto.CardResponseDto> getCards(
+            @RequestHeader("X-Mobile-Number") String mobileNumber) {
         return cardIntegrationService.getCards(mobileNumber);
     }
-    
+
     @GetMapping("/eligible-cards")
     public List<Object> getEligibleCards(@RequestHeader("X-Mobile-Number") String mobileNumber) {
         // Mock eligibility logic

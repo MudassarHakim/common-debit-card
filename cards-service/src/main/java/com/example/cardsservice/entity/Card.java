@@ -6,8 +6,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "cards", indexes = {
-    @Index(name = "idx_token_ref", columnList = "tokenRef", unique = true),
-    @Index(name = "idx_mobile", columnList = "customerMobileNumber")
+        @Index(name = "idx_token_ref", columnList = "tokenRef", unique = true),
+        @Index(name = "idx_mobile", columnList = "customerMobileNumber")
 })
 @Data
 public class Card {
@@ -41,13 +41,18 @@ public class Card {
     private String issuanceChannel;
 
     private LocalDateTime eventTimestamp;
-    
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
-    
+
     private LocalDateTime updatedAt;
 
     private boolean syncPending;
+
+    @Column(nullable = false)
+    private int syncRetryCount = 0;
+
+    private LocalDateTime lastSyncAttempt;
 
     @PrePersist
     protected void onCreate() {
