@@ -12,13 +12,12 @@ echo ""
 
 # 0. Health Checks
 echo "Step 0: Checking Service Health..."
-REPO_HEALTH=$(curl -s http://localhost:8081/actuator/health | grep "UP")
 SERVICE_HEALTH=$(curl -s http://localhost:8080/actuator/health | grep "UP")
 
-if [[ -n "$REPO_HEALTH" && -n "$SERVICE_HEALTH" ]]; then
-    echo -e "${GREEN}✅ Both services are UP${NC}"
+if [[ -n "$SERVICE_HEALTH" ]]; then
+    echo -e "${GREEN}✅ Cards service is UP${NC}"
 else
-    echo -e "${RED}❌ Services are not healthy. Please start them first.${NC}"
+    echo -e "${RED}❌ Service is not healthy. Please start it first.${NC}"
     exit 1
 fi
 echo ""

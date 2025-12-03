@@ -1,25 +1,21 @@
 # Unified Card Repository
 
-A centralized system for managing debit card metadata, ingesting events via Kafka, and exposing APIs through a public microservice. Built with **Java 17**, **Spring Boot 3**, and **MySQL**.
+A centralized system for managing debit card metadata, ingesting events via Kafka, and exposing APIs. Built with **Java 17**, **Spring Boot 3**, and **MySQL**.
 
 ## Architecture
 https://gitdiagram.com/MudassarHakim/common-debit-card
 ![Architecture Diagram](docs/images/architecture_diagram1.png)
 
-The system consists of two main microservices:
+The system is a unified **Cards Service** (`cards-service`) that combines all functionality:
 
-1.  **Card Repo Service** (`card-repo`):
-    *   **Internal Service**: Not exposed to the public internet.
-    *   **Kafka Consumer**: Ingests card events from the `card-events` topic.
-    *   **Database**: Stores card metadata in MySQL.
-    *   **Sync**: Synchronizes updates to the Customer360 system (mocked).
-    *   **Tech Stack**: Spring Boot, Spring Data JPA, Spring Kafka, MySQL, Redis.
-
-2.  **Cards Microservice** (`cards-service`):
-    *   **Public API**: Exposes REST endpoints for frontend applications.
-    *   **Gateway**: Acts as a facade for the internal Card Repo.
-    *   **Resilience**: Uses **Resilience4j** for circuit breaking and graceful degradation.
-    *   **Tech Stack**: Spring Boot Web, Spring Cloud Circuit Breaker, Redis.
+*   **Public API**: Exposes REST endpoints for frontend applications.
+*   **Internal API**: Provides internal card repository endpoints.
+*   **Kafka Consumer**: Ingests card events from the `card-events` topic.
+*   **Database**: Stores card metadata in MySQL.
+*   **Sync**: Synchronizes updates to the Customer360 system (mocked).
+*   **Resilience**: Uses **Resilience4j** for circuit breaking and graceful degradation.
+*   **Logging**: Integrated with Logstash for Kibana/Elasticsearch logging.
+*   **Tech Stack**: Spring Boot Web, Spring Data JPA, Spring Kafka, Spring Cloud Circuit Breaker, MySQL, Redis, Logstash.
 
 ## Prerequisites
 
@@ -43,15 +39,8 @@ Build both modules using Maven:
 mvn clean install
 ```
 
-### 3. Run the Services
+### 3. Run the Service
 
-**Terminal 1: Card Repo**
-```bash
-cd card-repo
-mvn spring-boot:run
-```
-
-**Terminal 2: Cards Service**
 ```bash
 cd cards-service
 mvn spring-boot:run

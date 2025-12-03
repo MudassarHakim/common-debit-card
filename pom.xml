@@ -9,7 +9,7 @@
     <name>common-debit-card</name>
     <description>Unified Card Repository Project</description>
     <modules>
-        <module>card-repo</module>
+
         <module>cards-service</module>
     </modules>
     <properties>
