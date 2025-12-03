@@ -1,4 +1,4 @@
-# 📊 Observability & Kafka Best Practices Implementation
+# Observability & Kafka Best Practices Implementation
 
 ## Overview
 Successfully implemented comprehensive observability with structured logging, distributed tracing, metrics, and Kafka best practices including Dead Letter Queue (DLQ).
